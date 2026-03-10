@@ -1,4 +1,5 @@
 package unrulyy;
+
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
@@ -54,7 +55,7 @@ public class unrulyDPGUI extends JFrame {
     private Map<String, String[][]> solutionCache = new HashMap<>();
     
     // For DP state representation
-    private int[][][] dpTable; // DP table for row-wise solving
+    private int[][] dpTable; // DP table for row-wise solving
     private int[][][] nextPattern; // Store next pattern for reconstruction
     
     // Menu items
