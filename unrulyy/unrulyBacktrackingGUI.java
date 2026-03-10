@@ -1,4 +1,5 @@
 package unrulyy;
+
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
@@ -33,6 +34,7 @@ public class unrulyBacktrackingGUI extends JFrame {
     private Timer aiTimer;
     private int moveDelay = 500;
     private int moveCount = 0;
+    private int totalAttemptedMoves = 0; // NEW: Track all backtracking attempts
     private boolean aiRunning = false;
     private JButton startAIButton;
     private JButton pauseAIButton;
@@ -90,6 +92,7 @@ public class unrulyBacktrackingGUI extends JFrame {
         newGameMenuItem.addActionListener(e -> {
             stopAI();
             moveCount = 0;
+            totalAttemptedMoves = 0; // Reset total attempts
             startGame();
         });
         gameMenu.add(newGameMenuItem);
@@ -121,6 +124,7 @@ public class unrulyBacktrackingGUI extends JFrame {
             // Restart game with new setting
             stopAI();
             moveCount = 0;
+            totalAttemptedMoves = 0;
             startGame();
         });
         gameMenu.add(uniqueRowsColumnsMenuItem);
@@ -188,6 +192,7 @@ public class unrulyBacktrackingGUI extends JFrame {
         newGameBtn.addActionListener(e -> {
             stopAI();
             moveCount = 0;
+            totalAttemptedMoves = 0;
             startGame();
         });
         top.add(newGameBtn);
@@ -218,7 +223,7 @@ public class unrulyBacktrackingGUI extends JFrame {
         statusLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
         top.add(statusLabel);
 
-        moveCountLabel = new JLabel("Moves: 0");
+        moveCountLabel = new JLabel("Moves: 0 (Attempts: 0)");
         moveCountLabel.setForeground(Color.WHITE);
         moveCountLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
         top.add(moveCountLabel);
@@ -281,6 +286,7 @@ public class unrulyBacktrackingGUI extends JFrame {
             useCustomDifficulty = false;
             stopAI();
             moveCount = 0;
+            totalAttemptedMoves = 0;
             startGame();
         });
         menu.add(item);
@@ -342,6 +348,7 @@ public class unrulyBacktrackingGUI extends JFrame {
 
             stopAI();
             moveCount = 0;
+            totalAttemptedMoves = 0;
             startGame();
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Invalid integer for width/height.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -361,7 +368,10 @@ public class unrulyBacktrackingGUI extends JFrame {
                         "• Restart: Reset to initial state\n" +
                         "• Solve Now: Find solution immediately\n" +
                         "• Start AI: Begin automated solving\n" +
-                        "• Step: Make one move at a time";
+                        "• Step: Make one move at a time\n\n" +
+                        "Move Tracking:\n" +
+                        "• Moves: Cells changed on the board (solution path)\n" +
+                        "• Attempts: Total backtracking attempts during solving";
         
         JOptionPane.showMessageDialog(this, message, "About Unruly AI", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -455,6 +465,7 @@ public class unrulyBacktrackingGUI extends JFrame {
 
         moveHistory.clear();
         moveCount = 0;
+        totalAttemptedMoves = 0; // Reset total attempts
         startTimeMillis = System.currentTimeMillis();
         solutionBoard = null;
         solving = false;
@@ -479,6 +490,7 @@ public class unrulyBacktrackingGUI extends JFrame {
         
         moveHistory.clear();
         moveCount = 0;
+        totalAttemptedMoves = 0; // Reset total attempts
         startTimeMillis = System.currentTimeMillis();
         solutionBoard = null;
         solving = false;
@@ -490,6 +502,10 @@ public class unrulyBacktrackingGUI extends JFrame {
     }
 
     private void solveInstantly() {
+        // Reset counters
+        moveCount = 0;
+        totalAttemptedMoves = 0;
+        
         // Disable solve button during solving
         solveNowMenuItem.setEnabled(false);
         stepAIButton.setEnabled(false);
@@ -521,12 +537,22 @@ public class unrulyBacktrackingGUI extends JFrame {
                         System.arraycopy(currentBoard[r], 0, initialBoard[r], 0, cols);
                     
                     moveHistory.clear();
-                    moveCount = 0;
                     boardPanel.repaint();
+                    
+                    // Show total attempted moves in victory message
+                    String message = "Solution found!\n" +
+                                    "Total attempted moves during backtracking: " + totalAttemptedMoves + "\n" +
+                                    "Final board moves applied: " + moveCount;
+                    JOptionPane.showMessageDialog(unrulyBacktrackingGUI.this, 
+                        message, 
+                        "Solving Complete", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                    
                     showVictoryMessage();
                 } else {
                     JOptionPane.showMessageDialog(unrulyBacktrackingGUI.this, 
-                        "No solution found! The puzzle might be unsolvable.", 
+                        "No solution found! The puzzle might be unsolvable.\n" +
+                        "Total attempted moves: " + totalAttemptedMoves, 
                         "Solving Failed", 
                         JOptionPane.ERROR_MESSAGE);
                 }
@@ -548,6 +574,10 @@ public class unrulyBacktrackingGUI extends JFrame {
             showVictoryMessage();
             return;
         }
+        
+        // Reset move counters
+        moveCount = 0;
+        totalAttemptedMoves = 0;
         
         // Disable menu items during AI operation
         newGameMenuItem.setEnabled(false);
@@ -580,9 +610,13 @@ public class unrulyBacktrackingGUI extends JFrame {
                     });
                     aiTimer.start();
                     updateStatus();
+                    
+                    // Show total attempted moves in console
+                    System.out.println("Total attempted moves during backtracking: " + totalAttemptedMoves);
                 } else {
                     JOptionPane.showMessageDialog(unrulyBacktrackingGUI.this, 
-                        "No solution exists for this puzzle!", 
+                        "No solution exists for this puzzle!\n" +
+                        "Total attempted moves: " + totalAttemptedMoves, 
                         "Unsolvable", 
                         JOptionPane.ERROR_MESSAGE);
                     solutionBoard = null;
@@ -637,6 +671,10 @@ public class unrulyBacktrackingGUI extends JFrame {
             return;
         }
         
+        // Reset counters for new solving session
+        moveCount = 0;
+        totalAttemptedMoves = 0;
+        
         // Disable step button during solving
         stepAIButton.setEnabled(false);
         
@@ -656,9 +694,13 @@ public class unrulyBacktrackingGUI extends JFrame {
                     stepAIButton.setEnabled(true);
                     if (found) {
                         makeNextMoveFromSolution();
+                        
+                        // Show total attempted moves
+                        System.out.println("Total attempted moves during backtracking: " + totalAttemptedMoves);
                     } else {
                         JOptionPane.showMessageDialog(unrulyBacktrackingGUI.this, 
-                            "No solution exists!", 
+                            "No solution exists!\n" +
+                            "Total attempted moves: " + totalAttemptedMoves, 
                             "Error", 
                             JOptionPane.ERROR_MESSAGE);
                         solutionBoard = null;
@@ -701,6 +743,7 @@ public class unrulyBacktrackingGUI extends JFrame {
 
     /**
      * Pure recursive backtracking solver - includes UNIQUE ROWS/COLUMNS rule
+     * MODIFIED: Counts all attempted moves
      */
     private boolean backtrackSolve(String[][] grid, int pos) {
         if (pos == rows * cols) {
@@ -720,6 +763,9 @@ public class unrulyBacktrackingGUI extends JFrame {
         String[] colors = {BLACK, WHITE};
         
         for (String color : colors) {
+            // Count this as an attempted move
+            totalAttemptedMoves++;
+            
             grid[r][c] = color;
             
             // Quick check for immediate violations (three in a row)
@@ -765,6 +811,7 @@ public class unrulyBacktrackingGUI extends JFrame {
 
     /**
      * Generate solved board using pure backtracking with ALL rules
+     * MODIFIED: Counts generation attempts
      */
     private String[][] generateSolvedBoardWithBacktracking() {
         String[][] grid = new String[rows][cols];
@@ -789,6 +836,7 @@ public class unrulyBacktrackingGUI extends JFrame {
 
     /**
      * Backtracking to generate a valid board with ALL rules
+     * MODIFIED: Counts all attempted moves during generation
      */
     private boolean backtrackGenerate(String[][] grid, int pos) {
         if (pos == rows * cols) {
@@ -807,6 +855,9 @@ public class unrulyBacktrackingGUI extends JFrame {
         
         // Try both colors
         for (String color : new String[]{BLACK, WHITE}) {
+            // Count generation attempts too
+            totalAttemptedMoves++;
+            
             grid[r][c] = color;
             
             if (!hasImmediateViolation(grid, r, c) && maintainsBalance(grid, r, c)) {
@@ -963,7 +1014,8 @@ public class unrulyBacktrackingGUI extends JFrame {
                 this,
                 "AI successfully completed the puzzle!\n" +
                 timeText + "\n" +
-                "Total moves: " + moveCount + "\n" +
+                "Moves applied to board: " + moveCount + "\n" +
+                "Total attempted moves during solving: " + totalAttemptedMoves + "\n" +
                 uniquenessMessage,
                 "Puzzle Solved!",
                 JOptionPane.INFORMATION_MESSAGE
@@ -1047,16 +1099,16 @@ public class unrulyBacktrackingGUI extends JFrame {
     private void updateStatus() {
         if (isBoardSolved()) {
             statusLabel.setText("Solved! " + getElapsedTimeText());
-            moveCountLabel.setText("Moves: " + moveCount + " ✓");
+            moveCountLabel.setText("Moves: " + moveCount + " (Attempts: " + totalAttemptedMoves + ") ✓");
         } else if (aiRunning) {
             statusLabel.setText("Backtracking AI running... " + getElapsedTimeText());
-            moveCountLabel.setText("Moves: " + moveCount);
+            moveCountLabel.setText("Moves: " + moveCount + " (Attempts: " + totalAttemptedMoves + ")");
         } else if (solving) {
             statusLabel.setText("Computing solution... " + getElapsedTimeText());
-            moveCountLabel.setText("Moves: " + moveCount);
+            moveCountLabel.setText("Moves: " + moveCount + " (Attempts: " + totalAttemptedMoves + ")");
         } else {
             statusLabel.setText("AI paused " + getElapsedTimeText());
-            moveCountLabel.setText("Moves: " + moveCount);
+            moveCountLabel.setText("Moves: " + moveCount + " (Attempts: " + totalAttemptedMoves + ")");
         }
     }
 
